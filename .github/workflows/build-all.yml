@@ -1,0 +1,30 @@
+name: build-all
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 5 1 * *"   # 1st of each month, 05:13 UTC
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: list
+        run: |
+          echo "matrix=$(jq -c '{include: .}' images.json)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: list
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.list.outputs.matrix) }}
+    uses: ./.github/workflows/build.yml
+    with:
+      app: ${{ matrix.app }}
+      upstream: ${{ matrix.upstream }}
+      image: ${{ matrix.image }}
+      ref: ${{ matrix.ref }}
+      dockerfile: ${{ matrix.dockerfile }}

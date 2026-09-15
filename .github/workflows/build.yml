@@ -1,0 +1,171 @@
+name: build (reusable)
+
+# Shared build workflow — called by one caller per app (see .github/workflows/<app>.yml).
+# Resolves the upstream version, skips if that version is already built, checks out the
+# upstream at that ref, applies an optional local overlay, and pushes to ghcr.io/pepperlink/<image>.
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: App id (matches images/<app>/ overlay dir if present; default image name)
+        type: string
+        required: true
+      upstream:
+        description: Upstream repository (owner/name)
+        type: string
+        required: true
+      image:
+        description: Image name under ghcr.io/pepperlink (defaults to app id)
+        type: string
+        required: false
+        default: ""
+      ref:
+        description: 'Upstream ref: tag, branch, or sha ("auto" = latest release → latest tag → default branch)'
+        type: string
+        required: false
+        default: auto
+      dockerfile:
+        description: Dockerfile path inside the upstream checkout (after overlay)
+        type: string
+        required: false
+        default: Dockerfile
+      platforms:
+        description: Build platforms
+        type: string
+        required: false
+        default: linux/amd64,linux/arm64
+      force:
+        description: Build even if this version already exists in the registry
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/pepperlink/${{ inputs.image != '' && inputs.image || inputs.app }}
+    steps:
+      - name: Resolve upstream ref and version
+        id: v
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REF='${{ inputs.ref }}'
+          TIER='ref'
+          if [ "$REF" = "auto" ]; then
+            TIER='tag'
+            REF=$(gh api "repos/${{ inputs.upstream }}/releases/latest" --jq .tag_name 2>/dev/null || true)
+            if [ -z "$REF" ]; then
+              REF=$(gh api "repos/${{ inputs.upstream }}/tags?per_page=1" --jq '.[0].name // empty' 2>/dev/null || true)
+            fi
+            if [ -z "$REF" ]; then
+              TIER='branch'
+              REF=$(gh api "repos/${{ inputs.upstream }}" --jq .default_branch)
+            fi
+          fi
+          SHA=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq .sha | cut -c1-7)
+          VER=$(printf '%s' "$REF" | sed -E 's/^v([0-9])/\1/')
+          if [ "$TIER" = "branch" ]; then CHECK="sha-${SHA}"; else CHECK="$VER"; fi
+          {
+            echo "ref=$REF"
+            echo "ver=$VER"
+            echo "sha=$SHA"
+            echo "check=$CHECK"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved -> ref=${REF}  version=${VER}  sha=${SHA}  (skip-check tag: ${CHECK})"
+
+      - name: Login to GHCR
+        run: echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: Check if this version is already built
+        id: check
+        run: |
+          if docker manifest inspect "${IMAGE}:${{ steps.v.outputs.check }}" > /dev/null 2>&1; then
+            echo "exists=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout container-images (for overlays)
+        if: steps.check.outputs.exists != '1' || inputs.force
+        uses: actions/checkout@v7
+
+      - name: Checkout upstream @ ${{ steps.v.outputs.ref }}
+        if: steps.check.outputs.exists != '1' || inputs.force
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.upstream }}
+          ref: ${{ steps.v.outputs.ref }}
+          path: upstream
+          fetch-depth: 1
+
+      - name: Apply overlay (images/${{ inputs.app }}/overlay -> upstream/)
+        if: steps.check.outputs.exists != '1' || inputs.force
+        run: |
+          if [ -d "images/${{ inputs.app }}/overlay" ]; then
+            cp -a "images/${{ inputs.app }}/overlay/." upstream/
+          else
+            echo "No overlay for ${{ inputs.app }} - building upstream as-is."
+          fi
+
+      - name: Compute tags
+        id: tags
+        if: steps.check.outputs.exists != '1' || inputs.force
+        run: |
+          VER='${{ steps.v.outputs.ver }}'
+          SHA='${{ steps.v.outputs.sha }}'
+          printf '%s\n' "${IMAGE}:${VER}" "${IMAGE}:sha-${SHA}" "${IMAGE}:latest" > tags.txt
+          if printf '%s' "$VER" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            printf '%s\n' "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1-2)" "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1)" >> tags.txt
+          fi
+          echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+          cat tags.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        if: steps.check.outputs.exists != '1' || inputs.force
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.exists != '1' || inputs.force
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        if: steps.check.outputs.exists != '1' || inputs.force
+        uses: docker/build-push-action@v7
+        with:
+          context: upstream
+          file: upstream/${{ inputs.dockerfile }}
+          platforms: ${{ inputs.platforms }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=${{ inputs.app }}
+            org.opencontainers.image.source=https://github.com/pepperlink/container-images
+            org.opencontainers.image.revision=${{ steps.v.outputs.sha }}
+            org.opencontainers.image.version=${{ steps.v.outputs.ver }}
+            io.pepperlink.upstream=https://github.com/${{ inputs.upstream }}
+            io.pepperlink.upstream-ref=${{ steps.v.outputs.ref }}
+
+      - name: Summary
+        run: |
+          {
+            echo "## ${{ inputs.app }}"
+            echo ""
+            if [ "${{ steps.check.outputs.exists }}" = "1" ]; then
+              echo "Skipped - ${IMAGE}:${{ steps.v.outputs.check }} already exists."
+              echo "(upstream resolves to ${{ inputs.upstream }}@${{ steps.v.outputs.ref }}, sha-${{ steps.v.outputs.sha }})"
+            else
+              echo "Built ${{ inputs.upstream }}@${{ steps.v.outputs.ref }} (sha-${{ steps.v.outputs.sha }})"
+              echo ""
+              echo "Pushed:"
+              sed 's/^/- /' tags.txt
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

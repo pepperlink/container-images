@@ -1,0 +1,13 @@
+name: master-fetch
+
+on:
+  schedule:
+    - cron: "27 4 * * 1"   # Mondays 04:27 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      app: master-fetch
+      upstream: dondai1234/master-fetch

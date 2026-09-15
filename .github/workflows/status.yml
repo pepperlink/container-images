@@ -1,0 +1,30 @@
+name: status (README refresh)
+
+on:
+  schedule:
+    - cron: "7 5 * * 1"   # Mondays 05:07 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Refresh status table
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/update_status.py
+      - name: Commit if changed
+        run: |
+          git config user.name "Diane Evans (Blue Rose Task Force)"
+          git config user.email "diane@pepperlink.nl"
+          if git diff --quiet; then
+            echo "No changes."
+          else
+            git add README.md
+            git commit -m "chore(status): refresh upstream release table"
+            git push
+          fi

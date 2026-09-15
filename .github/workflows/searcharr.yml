@@ -1,0 +1,13 @@
+name: searcharr
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays 04:17 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      app: searcharr
+      upstream: toddrob99/searcharr

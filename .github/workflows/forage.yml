@@ -1,0 +1,13 @@
+name: forage
+
+on:
+  schedule:
+    - cron: "47 4 * * 1"   # Mondays 04:47 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      app: forage
+      upstream: aldemaroc/forage
