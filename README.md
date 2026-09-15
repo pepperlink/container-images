@@ -33,10 +33,12 @@ them call one shared build workflow.
 
 ## Adding a new image
 
+See **[docs/adding-an-image.md](docs/adding-an-image.md)** for the full walkthrough (preflight,
+inventory entry, caller, first build, overlays, versioning). Short version:
+
 1. Add an entry to `images.json` (include a `version` pin when the upstream has tags, so Renovate can track it).
 2. Add `.github/workflows/<app>.yml` (copy an existing caller, adjust `app`/`upstream`).
-3. If the build needs tweaks, drop files into `images/<app>/overlay/` — they are copied over
-   the upstream checkout before building (e.g. a patched Dockerfile or config files).
+3. Push to `main` — the `build-all` trigger builds it (or run it manually).
 
 ### Versioning
 
