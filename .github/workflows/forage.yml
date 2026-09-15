@@ -11,3 +11,4 @@ jobs:
     with:
       app: forage
       upstream: aldemaroc/forage
+      # platforms: linux/amd64,linux/arm64   # uncomment for multi-arch (extra CI minutes)

@@ -21,7 +21,7 @@ them call one shared build workflow.
 - `.github/workflows/<app>.yml` — one caller per app: a manual "Run workflow" button (forage keeps a light weekly sha-check).
 - `.github/workflows/build.yml` — the shared engine: resolve version (pin in `images.json` →
   latest release → latest tag → default branch) → **skip if that version is already built** →
-  checkout upstream → optional overlay from `images/<app>/overlay/` → buildx (amd64 + arm64) →
+  checkout upstream → optional overlay from `images/<app>/overlay/` → buildx (amd64 by default) →
   push `:<version>`, `:major.minor`, `:major` (when semver), `:sha-<short>`, `:latest` — with OCI labels.
 - **Renovate** (`renovate.json`) watches the upstreams and opens a PR bumping the `version` pin in
   `images.json` — automerged for minor/patch/pin; majors gated behind the dependency dashboard.
@@ -37,6 +37,21 @@ them call one shared build workflow.
 2. Add `.github/workflows/<app>.yml` (copy an existing caller, adjust `app`/`upstream`).
 3. If the build needs tweaks, drop files into `images/<app>/overlay/` — they are copied over
    the upstream checkout before building (e.g. a patched Dockerfile or config files).
+
+### Versioning
+
+Pins follow the upstream tags (Renovate-managed). For upstreams with no tags yet (e.g. forage),
+builds get an interim version `0.<commit-date>-<sha7>` (e.g. `0.20260915-93920b3`) until upstream
+starts versioning — the pin flow then takes over automatically.
+
+### ARM builds (optional)
+
+We build **amd64 only** by default — arm64 builds run under emulation (slow) and burn a lot of
+CI minutes, so they're opt-in. To build multi-arch for an app:
+
+- uncomment the `platforms:` line in that app's caller (`.github/workflows/<app>.yml`), or
+- invoke `build.yml` with `platforms: linux/amd64,linux/arm64` (e.g. from `build-all` or another
+  workflow).
 
 ## Migration log
 

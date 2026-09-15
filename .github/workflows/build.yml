@@ -37,10 +37,10 @@ on:
         required: false
         default: Dockerfile
       platforms:
-        description: Build platforms
+        description: 'Build platforms (default amd64 only; add ,linux/arm64 for multi-arch — costs extra CI minutes)'
         type: string
         required: false
-        default: linux/amd64,linux/arm64
+        default: linux/amd64
       force:
         description: Build even if this version already exists in the registry
         type: boolean
@@ -94,7 +94,14 @@ jobs:
           fi
           SHA=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq .sha 2>/dev/null | cut -c1-7)
           VER=$(printf '%s' "$REF" | sed -E 's/^v([0-9])/\1/')
-          if [ "$TIER" = "branch" ]; then CHECK="sha-${SHA}"; else CHECK="$VER"; fi
+          if [ "$TIER" = "branch" ]; then
+            # interim versioning for untagged upstreams: 0.<commit-date>-<short-sha>
+            CDATE=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq '.commit.committer.date' 2>/dev/null | cut -c1-10 | tr -d '-' || true)
+            if valid_ref "$CDATE"; then VER="0.${CDATE}-${SHA}"; fi
+            CHECK="$VER"
+          else
+            CHECK="$VER"
+          fi
           {
             echo "ref=$REF"
             echo "ver=$VER"
@@ -161,7 +168,7 @@ jobs:
         with:
           context: upstream
           file: upstream/${{ inputs.dockerfile }}
-          platforms: ${{ inputs.platforms }}
+          platforms: ${{ inputs.platforms != '' && inputs.platforms || 'linux/amd64' }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
           labels: |

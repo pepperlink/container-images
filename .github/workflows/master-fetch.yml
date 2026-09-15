@@ -9,3 +9,4 @@ jobs:
     with:
       app: master-fetch
       upstream: dondai1234/master-fetch
+      # platforms: linux/amd64,linux/arm64   # uncomment for multi-arch (extra CI minutes)
