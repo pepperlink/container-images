@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+  "assignees": ["@cathelijne"],
+  "vulnerabilityAlerts": {
+    "automerge": true
+  },
+  "gitIgnoredAuthors": [
+    "renovate-bot",
+    "Renovate Bot",
+    "bot@pepperlink.nl",
+    "Renovate Bot <bot@pepperlink.nl>",
+    "diane@pepperlink.nl",
+    "Diane Evans (Blue Rose Task Force)"
+  ],
+  "major": {
+    "dependencyDashboardApproval": true,
+    "automerge": false
+  },
+  "platformAutomerge": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track upstream release pins in images.json (versioning follows the upstream tags)",
+      "managerFilePatterns": ["/^images\\.json$/"],
+      "matchStrings": [
+        "\"app\": \"(?<app>[^\"]+)\"[^\\n]*?\"upstream\": \"(?<depName>[^\"]+)\"[^\\n]*?\"version\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Image pins: automerge minor/patch/pin (like the rest of the fleet); majors need dashboard approval",
+      "matchManagers": ["custom.regex"],
+      "matchFileNames": ["images.json"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "autoApprove": true,
+      "automerge": true
+    }
+  ]
+}

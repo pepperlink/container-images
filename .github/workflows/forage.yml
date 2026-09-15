@@ -2,7 +2,7 @@ name: forage
 
 on:
   schedule:
-    - cron: "47 4 * * 1"   # Mondays 04:47 UTC
+    - cron: "47 4 * * 1"   # Mondays 04:47 UTC — light sha-check (no upstream releases/tags)
   workflow_dispatch:
 
 jobs:

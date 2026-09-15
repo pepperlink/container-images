@@ -1,5 +1,5 @@
 [
-  {"app": "master-fetch", "upstream": "dondai1234/master-fetch", "image": "master-fetch", "ref": "auto", "dockerfile": "Dockerfile", "note": "Upstream no longer updated; last release date tracked in README."},
-  {"app": "donsetch",     "upstream": "dondai44423/donsetch", "image": "donsetch",     "ref": "auto", "dockerfile": "Dockerfile", "note": "Moved from pepperlink/donsetch fork build."},
-  {"app": "forage",       "upstream": "aldemaroc/forage",     "image": "forage",       "ref": "auto", "dockerfile": "Dockerfile", "note": "No upstream releases - builds default branch, sha-tagged."}
+  {"app": "master-fetch", "upstream": "dondai1234/master-fetch", "image": "master-fetch", "ref": "auto", "version": "v12.4.1", "dockerfile": "Dockerfile", "note": "Upstream no longer updated; pin tracked by Renovate, last release date in README."},
+  {"app": "donsetch",     "upstream": "dondai44423/donsetch", "image": "donsetch",     "ref": "auto", "version": "v4.1.0", "dockerfile": "Dockerfile", "note": "Pin managed by Renovate; merging a pin bump triggers the rebuild."},
+  {"app": "forage",       "upstream": "aldemaroc/forage",     "image": "forage",       "ref": "auto", "dockerfile": "Dockerfile", "note": "No upstream releases/tags - weekly sha-check (forage.yml), sha-tagged builds."}
 ]

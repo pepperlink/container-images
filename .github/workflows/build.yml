@@ -1,14 +1,15 @@
 name: build (reusable)
 
-# Shared build workflow — called by one caller per app (see .github/workflows/<app>.yml).
-# Resolves the upstream version, skips if that version is already built, checks out the
+# Shared build workflow — called by one caller per app (.github/workflows/<app>.yml)
+# and by build-all.yml. Resolves the version (explicit input → pin in images.json →
+# latest release → latest tag → default branch), skips if already built, checks out the
 # upstream at that ref, applies an optional local overlay, and pushes to ghcr.io/pepperlink/<image>.
 
 on:
   workflow_call:
     inputs:
       app:
-        description: App id (matches images/<app>/ overlay dir if present; default image name)
+        description: App id (matches the entry in images.json + images/<app>/ overlay dir)
         type: string
         required: true
       upstream:
@@ -21,10 +22,15 @@ on:
         required: false
         default: ""
       ref:
-        description: 'Upstream ref: tag, branch, or sha ("auto" = latest release → latest tag → default branch)'
+        description: 'Upstream ref: tag, branch, or sha ("auto" = pin in images.json → latest release → latest tag → default branch)'
         type: string
         required: false
         default: auto
+      version:
+        description: Explicit version override (build-all passes the images.json pin through here)
+        type: string
+        required: false
+        default: ""
       dockerfile:
         description: Dockerfile path inside the upstream checkout (after overlay)
         type: string
@@ -51,6 +57,9 @@ jobs:
     env:
       IMAGE: ghcr.io/pepperlink/${{ inputs.image != '' && inputs.image || inputs.app }}
     steps:
+      - name: Checkout container-images (pins + overlays)
+        uses: actions/checkout@v7
+
       - name: Resolve upstream ref and version
         id: v
         env:
@@ -63,6 +72,13 @@ jobs:
           }
           REF='${{ inputs.ref }}'
           TIER='ref'
+          if [ "$REF" = "auto" ] && [ -n '${{ inputs.version }}' ]; then
+            REF='${{ inputs.version }}'
+          fi
+          if [ "$REF" = "auto" ]; then
+            PIN=$(jq -r --arg app '${{ inputs.app }}' '.[] | select(.app == $app) | .version // empty' images.json)
+            if valid_ref "$PIN"; then REF="$PIN"; fi
+          fi
           if [ "$REF" = "auto" ]; then
             TIER='tag'
             REF=$(gh api "repos/${{ inputs.upstream }}/releases/latest" --jq .tag_name 2>/dev/null || true)
@@ -98,10 +114,6 @@ jobs:
           else
             echo "exists=0" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Checkout container-images (for overlays)
-        if: steps.check.outputs.exists != '1' || inputs.force
-        uses: actions/checkout@v7
 
       - name: Checkout upstream @ ${{ steps.v.outputs.ref }}
         if: steps.check.outputs.exists != '1' || inputs.force

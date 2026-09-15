@@ -2,8 +2,11 @@ name: build-all
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "13 5 1 * *"   # 1st of each month, 05:13 UTC
+  push:
+    branches:
+      - main
+    paths:
+      - images.json
 
 jobs:
   list:
@@ -14,7 +17,7 @@ jobs:
       - uses: actions/checkout@v7
       - id: list
         run: |
-          echo "matrix=$(jq -c '{include: .}' images.json)" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c '{include: [.[] | {app, upstream, image, ref, dockerfile, version: (.version // "")}]}' images.json)" >> "$GITHUB_OUTPUT"
 
   build:
     needs: list
@@ -27,4 +30,5 @@ jobs:
       upstream: ${{ matrix.upstream }}
       image: ${{ matrix.image }}
       ref: ${{ matrix.ref }}
+      version: ${{ matrix.version }}
       dockerfile: ${{ matrix.dockerfile }}
