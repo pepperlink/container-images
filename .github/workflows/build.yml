@@ -57,20 +57,26 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # a ref is valid unless it's empty/null or looks like an API error body (JSON)
+          valid_ref() {
+            [ -n "$1" ] && [ "$1" != "null" ] && [ "${1#\{}" = "$1" ] && [ "${1#\[}" = "$1" ]
+          }
           REF='${{ inputs.ref }}'
           TIER='ref'
           if [ "$REF" = "auto" ]; then
             TIER='tag'
             REF=$(gh api "repos/${{ inputs.upstream }}/releases/latest" --jq .tag_name 2>/dev/null || true)
-            if [ -z "$REF" ]; then
-              REF=$(gh api "repos/${{ inputs.upstream }}/tags?per_page=1" --jq '.[0].name // empty' 2>/dev/null || true)
-            fi
-            if [ -z "$REF" ]; then
+            valid_ref "$REF" || REF=$(gh api "repos/${{ inputs.upstream }}/tags?per_page=1" --jq '.[0].name // empty' 2>/dev/null || true)
+            if ! valid_ref "$REF"; then
               TIER='branch'
-              REF=$(gh api "repos/${{ inputs.upstream }}" --jq .default_branch)
+              REF=$(gh api "repos/${{ inputs.upstream }}" --jq .default_branch 2>/dev/null || true)
             fi
           fi
-          SHA=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq .sha | cut -c1-7)
+          if ! valid_ref "$REF"; then
+            echo "::error::could not resolve a ref for ${{ inputs.upstream }} (got: ${REF})"
+            exit 1
+          fi
+          SHA=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq .sha 2>/dev/null | cut -c1-7)
           VER=$(printf '%s' "$REF" | sed -E 's/^v([0-9])/\1/')
           if [ "$TIER" = "branch" ]; then CHECK="sha-${SHA}"; else CHECK="$VER"; fi
           {
