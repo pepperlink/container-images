@@ -1,5 +1,4 @@
 [
-  {"app": "searcharr",    "upstream": "toddrob99/searcharr",  "image": "searcharr",    "ref": "auto", "dockerfile": "Dockerfile", "note": "Replaces the cathelijne/searcharr fork build; chart pepperlink/charts/searcharr points at the old name until cutover."},
   {"app": "master-fetch", "upstream": "dondai1234/master-fetch", "image": "master-fetch", "ref": "auto", "dockerfile": "Dockerfile", "note": "Upstream no longer updated; last release date tracked in README."},
   {"app": "donsetch",     "upstream": "dondai44423/donsetch", "image": "donsetch",     "ref": "auto", "dockerfile": "Dockerfile", "note": "Moved from pepperlink/donsetch fork build."},
   {"app": "forage",       "upstream": "aldemaroc/forage",     "image": "forage",       "ref": "auto", "dockerfile": "Dockerfile", "note": "No upstream releases - builds default branch, sha-tagged."}
