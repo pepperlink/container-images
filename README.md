@@ -11,9 +11,9 @@ them call one shared build workflow.
 <!-- status:start -->
 | App | Upstream | Latest upstream release | Our image | Notes |
 |---|---|---|---|---|
-| `master-fetch` | [dondai1234/master-fetch](https://github.com/dondai1234/master-fetch) | `v12.4.1` (2026-07-24) | [ghcr.io/pepperlink/master-fetch](https://github.com/orgs/pepperlink/packages/container/package/master-fetch) — 12.4.1, 12.4, 12 | Upstream no longer updated; pin tracked by Renovate, last release date in README. |
-| `donsetch` | [dondai44423/donsetch](https://github.com/dondai44423/donsetch) | `v4.1.0` (2026-09-14) | [ghcr.io/pepperlink/donsetch](https://github.com/orgs/pepperlink/packages/container/package/donsetch) — 3.6.7, 3.6, 3 | Pin managed by Renovate; merging a pin bump triggers the rebuild. |
-| `forage` | [aldemaroc/forage](https://github.com/aldemaroc/forage) | `main` @ 2026-08-19 (no releases) | [ghcr.io/pepperlink/forage](https://github.com/orgs/pepperlink/packages/container/package/forage) — 0.9.0, 0.9, 0 | No upstream releases/tags - weekly sha-check (forage.yml), sha-tagged builds. |
+| `master-fetch` | [dondai1234/master-fetch](https://github.com/dondai1234/master-fetch) | `v12.4.1` (2026-07-24) | [ghcr.io/pepperlink/master-fetch](https://github.com/orgs/pepperlink/packages/container/package/master-fetch) — not built yet | Upstream no longer updated; pin tracked by Renovate, last release date in README. |
+| `donsetch` | [dondai44423/donsetch](https://github.com/dondai44423/donsetch) | `v4.2.9` (2026-09-20) | [ghcr.io/pepperlink/donsetch](https://github.com/orgs/pepperlink/packages/container/package/donsetch) — 4.1.0, sha-fec3e83, 4.1, 4 | Pin managed by Renovate; merging a pin bump triggers the rebuild. |
+| `forage` | [aldemaroc/forage](https://github.com/aldemaroc/forage) | `main` @ 2026-09-16 (no releases) | [ghcr.io/pepperlink/forage](https://github.com/orgs/pepperlink/packages/container/package/forage) — 0.20260819-93920b3, sha-93920b3, 0.20260916-590c27e, sha-590c27e | No upstream releases/tags - weekly sha-check (forage.yml), sha-tagged builds. |
 <!-- status:end -->
 
 ## How it works
