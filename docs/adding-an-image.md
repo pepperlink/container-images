@@ -53,10 +53,10 @@ the new app (nothing else — existing images are skipped). You can also build b
 Watch it: **Actions** tab → the run → job summary shows what got resolved, built and pushed.
 Verify the result: `https://github.com/orgs/pepperlink/packages` (or pull it: `docker pull ghcr.io/pepperlink/myapp:latest`).
 
-## 4. If the upstream has no releases/tags yet (like `forage`)
+## 4. If the upstream has no releases/tags yet
 
 - Omit `version` (nothing for Renovate to track).
-- Copy `forage.yml`'s shape and keep its weekly `schedule` — a light commit-sha check.
+- Add a caller workflow with a light weekly `schedule` sha-check (see git history for the retired forage.yml shape) — check the upstream commit sha and build only when it moved.
 - Interim versions are generated automatically: `0.<commit-date>-<sha7>` (e.g. `0.20260915-93920b3`).
 - When upstream starts tagging, add the `version` pin and drop the schedule — Renovate takes over.
 

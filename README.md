@@ -13,12 +13,11 @@ them call one shared build workflow.
 |---|---|---|---|---|
 | `master-fetch` | [dondai1234/master-fetch](https://github.com/dondai1234/master-fetch) | `v12.4.1` (2026-07-24) | [ghcr.io/pepperlink/master-fetch](https://github.com/orgs/pepperlink/packages/container/package/master-fetch) — not built yet | Upstream no longer updated; pin tracked by Renovate, last release date in README. |
 | `donsetch` | [dondai44423/donsetch](https://github.com/dondai44423/donsetch) | `v4.7.4` (2026-10-10) | [ghcr.io/pepperlink/donsetch](https://github.com/orgs/pepperlink/packages/container/package/donsetch) — 4.1.0, sha-fec3e83, 4.1, 4 | Pin managed by Renovate; merging a pin bump triggers the rebuild. |
-| `forage` | [aldemaroc/forage](https://github.com/aldemaroc/forage) | `v1.0.1` (2026-09-25) | [ghcr.io/pepperlink/forage](https://github.com/orgs/pepperlink/packages/container/package/forage) — 1.0.1, 0.20260819-93920b3, sha-93920b3, 0.20260916-590c27e | No upstream releases/tags - weekly sha-check (forage.yml), sha-tagged builds. |
 <!-- status:end -->
 
 ## How it works
 
-- `.github/workflows/<app>.yml` — one caller per app: a manual "Run workflow" button (forage keeps a light weekly sha-check).
+- `.github/workflows/<app>.yml` — one caller per app: a manual "Run workflow" button (a sha-check caller shape exists for upstreams without releases).
 - `.github/workflows/build.yml` — the shared engine: resolve version (pin in `images.json` →
   latest release → latest tag → default branch) → **skip if that version is already built** →
   checkout upstream → optional overlay from `images/<app>/overlay/` → buildx (amd64 by default) →
@@ -42,7 +41,7 @@ inventory entry, caller, first build, overlays, versioning). Short version:
 
 ### Versioning
 
-Pins follow the upstream tags (Renovate-managed). For upstreams with no tags yet (e.g. forage),
+Pins follow the upstream tags (Renovate-managed). For upstreams with no tags yet,
 builds get an interim version `0.<commit-date>-<sha7>` (e.g. `0.20260915-93920b3`) until upstream
 starts versioning — the pin flow then takes over automatically.
 
@@ -62,3 +61,4 @@ CI minutes, so they're opt-in. To build multi-arch for an app:
 - 2026-09-15 — repo created; callers for master-fetch, donsetch, forage.
   Replaces per-fork build workflows and `ghcr.io/cathelijne/*` images. (searcharr dropped — replaced
   by Seerr; backdroppr dropped — upstream archived; forks being deleted.) Fork cleanup handled separately.
+- 2026-10-13 — forage retired (owner ruling): caller workflow and images.json entry removed; the GHCR package ghcr.io/pepperlink/forage stays but is no longer built.
