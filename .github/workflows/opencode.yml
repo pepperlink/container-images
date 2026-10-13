@@ -1,0 +1,15 @@
+name: opencode
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      app: opencode
+      upstream: anomalyco/opencode
+      # The upstream image carries no git; the overlay adds it (see images/opencode/overlay/Dockerfile).
+      # Must match images.json `version` minus the leading 'v'.
+      build_args: UPSTREAM_TAG=1.19.0
+      # platforms: linux/amd64,linux/arm64   # uncomment for multi-arch (extra CI minutes)
