@@ -46,6 +46,16 @@ on:
         type: boolean
         required: false
         default: false
+      build_args:
+        description: 'Extra docker build args, "KEY=value" per line (default: none). Passed to the Dockerfile as --build-arg.'
+        type: string
+        required: false
+        default: ""
+      tag_suffix:
+        description: 'Variant tag suffix, e.g. "chrome" -> <version>-chrome. A suffixed build moves neither latest nor the major(.minor) tags.'
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -98,10 +108,13 @@ jobs:
             # interim versioning for untagged upstreams: 0.<commit-date>-<short-sha>
             CDATE=$(gh api "repos/${{ inputs.upstream }}/commits/${REF}" --jq '.commit.committer.date' 2>/dev/null | cut -c1-10 | tr -d '-' || true)
             if valid_ref "$CDATE"; then VER="0.${CDATE}-${SHA}"; fi
-            CHECK="$VER"
-          else
-            CHECK="$VER"
           fi
+          # A variant carries its suffix in the version, so the skip-if-built check below is
+          # per-variant and the plain <version> tag stays with the standard build.
+          if [ -n '${{ inputs.tag_suffix }}' ]; then
+            VER="${VER}-${{ inputs.tag_suffix }}"
+          fi
+          CHECK="$VER"
           {
             echo "ref=$REF"
             echo "ver=$VER"
@@ -146,9 +159,16 @@ jobs:
         run: |
           VER='${{ steps.v.outputs.ver }}'
           SHA='${{ steps.v.outputs.sha }}'
-          printf '%s\n' "${IMAGE}:${VER}" "${IMAGE}:sha-${SHA}" "${IMAGE}:latest" > tags.txt
-          if printf '%s' "$VER" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            printf '%s\n' "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1-2)" "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1)" >> tags.txt
+          printf '%s\n' "${IMAGE}:${VER}" "${IMAGE}:sha-${SHA}" > tags.txt
+          if [ -n '${{ inputs.tag_suffix }}' ]; then
+            # Variant build: keep <version>-<suffix> + sha only. `latest` and the major(.minor)
+            # tags stay on the standard build so a variant can be tried and rolled back by tag.
+            echo "Variant build (tag_suffix=${{ inputs.tag_suffix }}) - not moving latest/major/minor tags."
+          else
+            printf '%s\n' "${IMAGE}:latest" >> tags.txt
+            if printf '%s' "$VER" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              printf '%s\n' "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1-2)" "${IMAGE}:$(printf '%s' "$VER" | cut -d. -f1)" >> tags.txt
+            fi
           fi
           echo "tags<<EOF" >> "$GITHUB_OUTPUT"
           cat tags.txt >> "$GITHUB_OUTPUT"
@@ -171,6 +191,7 @@ jobs:
           platforms: ${{ inputs.platforms != '' && inputs.platforms || 'linux/amd64' }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+          build-args: ${{ inputs.build_args }}
           labels: |
             org.opencontainers.image.title=${{ inputs.app }}
             org.opencontainers.image.source=https://github.com/pepperlink/container-images

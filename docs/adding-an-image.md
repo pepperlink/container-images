@@ -71,6 +71,16 @@ Use it for:
 
 No overlay needed? Don't create the directory — the build uses upstream verbatim.
 
+## 5b. Build args and variant tags
+
+- **`build_args: |`** — extra docker build args, one `KEY=value` per line. Prefer this over forking
+  the Dockerfile into an overlay when upstream's own Dockerfile already exposes the knob
+  (e.g. donsetch's `INSTALL_CHROME=true`, which adds chromium + xvfb for tier-2 browser escalation).
+- **`tag_suffix: <s>`** — publishes the build as `<version>-<s>` (plus `:sha-<sha>`) for a variant.
+  A suffixed build deliberately does **not** move `latest` or the major(.minor) tags, so a variant
+  can be trialled and rolled back by tag alone; the skip-if-built check uses the suffixed tag too.
+  When the variant becomes the standard build, drop the suffix and let the normal tags take over.
+
 ## 6. What happens afterwards (maintenance)
 
 - **Renovate** opens a PR when upstream releases (automerge for minor/patch/pin; majors wait on the

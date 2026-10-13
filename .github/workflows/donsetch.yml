@@ -9,4 +9,12 @@ jobs:
     with:
       app: donsetch
       upstream: dondai44423/donsetch
+      # Tier-2 (bot-wall / JS-shell) escalation needs a browser *and* a display inside the image.
+      # INSTALL_CHROME=true is upstream's documented container path: it adds chromium + xvfb
+      # (~350 MB). Upstream's Dockerfile does not pass --no-sandbox itself; the image sets
+      # DONGHOST_NO_SANDBOX=1, which is the documented escape hatch for containers.
+      build_args: INSTALL_CHROME=true
+      # Published as <version>-chrome (+ sha-<sha>), leaving the plain <version> and latest tags
+      # on the standard build: the variant can be trialled and rolled back by tag alone.
+      tag_suffix: chrome
       # platforms: linux/amd64,linux/arm64   # uncomment for multi-arch (extra CI minutes)
