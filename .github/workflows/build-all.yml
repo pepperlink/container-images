@@ -17,7 +17,12 @@ jobs:
       - uses: actions/checkout@v7
       - id: list
         run: |
-          echo "matrix=$(jq -c '{include: [.[] | {app, upstream, image, ref, dockerfile, version: (.version // "")}]}' images.json)" >> "$GITHUB_OUTPUT"
+          # One matrix row per images.json entry, plus one row per entry under `variants`.
+          # A variant row shares the app's pin/upstream but carries its own build_args and
+          # tag_suffix, so a Renovate pin bump rebuilds <version> AND <version>-<suffix> in
+          # the same run. Without this, a suffixed tag only exists for whatever pin was in
+          # the tree when the variant was last built by hand (donsetch 4.10.1-chrome, 2026-10-17).
+          echo "matrix=$(jq -c '{include: [ .[] as $a | ({app: $a.app, upstream: $a.upstream, image: ($a.image // $a.app), ref: ($a.ref // "auto"), dockerfile: ($a.dockerfile // "Dockerfile"), version: ($a.version // ""), build_args: "", tag_suffix: ""}), (($a.variants // [])[] | {app: $a.app, upstream: $a.upstream, image: ($a.image // $a.app), ref: ($a.ref // "auto"), dockerfile: ($a.dockerfile // "Dockerfile"), version: ($a.version // ""), build_args: (.build_args // ""), tag_suffix: (.suffix // "")}) ] }' images.json)" >> "$GITHUB_OUTPUT"
 
   build:
     needs: list
@@ -32,3 +37,5 @@ jobs:
       ref: ${{ matrix.ref }}
       version: ${{ matrix.version }}
       dockerfile: ${{ matrix.dockerfile }}
+      build_args: ${{ matrix.build_args }}
+      tag_suffix: ${{ matrix.tag_suffix }}
