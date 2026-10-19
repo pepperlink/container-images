@@ -12,8 +12,9 @@ them call one shared build workflow.
 | App | Upstream | Latest upstream release | Our image | Notes |
 |---|---|---|---|---|
 | `master-fetch` | [dondai1234/master-fetch](https://github.com/dondai1234/master-fetch) | `v12.4.1` (2026-07-24) | [ghcr.io/pepperlink/master-fetch](https://github.com/orgs/pepperlink/packages/container/package/master-fetch) — not built yet | Upstream no longer updated; pin tracked by Renovate, last release date in README. |
-| `donsetch` | [dondai44423/donsetch](https://github.com/dondai44423/donsetch) | `v4.7.4` (2026-10-10) | [ghcr.io/pepperlink/donsetch](https://github.com/orgs/pepperlink/packages/container/package/donsetch) — 4.1.0, sha-fec3e83, 4.1, 4 | Pin managed by Renovate; merging a pin bump triggers the rebuild. |
+| `donsetch` | [dondai44423/donsetch](https://github.com/dondai44423/donsetch) | `v4.10.1` (2026-10-14) | [ghcr.io/pepperlink/donsetch](https://github.com/orgs/pepperlink/packages/container/package/donsetch) — 4.10.1, 4.1.0, sha-fec3e83, 4.1 | Pin managed by Renovate; merging a pin bump triggers the rebuild. |
 | `forage` | [aldemaroc/forage](https://github.com/aldemaroc/forage) | `v1.0.1` (2026-09-25) | [ghcr.io/pepperlink/forage](https://github.com/orgs/pepperlink/packages/container/package/forage) — 1.0.1, 0.20260819-93920b3, sha-93920b3, 0.20260916-590c27e | No upstream releases/tags - weekly sha-check (forage.yml), sha-tagged builds. |
+| `opencode` | [anomalyco/opencode](https://github.com/anomalyco/opencode) | `v1.19.3` (2026-10-16) | [ghcr.io/pepperlink/opencode](https://github.com/orgs/pepperlink/packages/container/package/opencode) — 1.19.3, 1.19.0, sha-733b2c6, 1.19 | Derived, not source-built: the upstream image packages a prebuilt musl binary and ships NO git, so the coding harness could edit a worktree but never commit. This overlay starts from the upstream image and adds git. Keep the caller's UPSTREAM_TAG build-arg (drop the leading 'v') in step with `version` — Renovate bumps the pin, the build-arg is manual. |
 <!-- status:end -->
 
 ## How it works
