@@ -2,7 +2,7 @@
 # harness could edit a worktree but never commit. Base is the upstream *image* (pinned by tag,
 # kept in step with images.json's `version` / the caller's UPSTREAM_TAG build-arg), not a source
 # build — upstream's own Dockerfile only COPYs from a `dist/` that does not exist in a checkout.
-ARG UPSTREAM_TAG=1.19.4
+ARG UPSTREAM_TAG=1.19.5
 FROM ghcr.io/anomalyco/opencode:${UPSTREAM_TAG}
 
 USER root
