@@ -1,6 +1,6 @@
 # Same as plastic-labs/honcho mcp/Dockerfile, but COPY paths assume the
 # build context is the Honcho repo root (container-images build.yml).
-FROM oven/bun:1.4.4
+FROM oven/bun:1.4.5
 
 WORKDIR /app
 
