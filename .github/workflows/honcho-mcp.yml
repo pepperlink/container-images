@@ -1,0 +1,12 @@
+name: honcho-mcp
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      app: honcho-mcp
+      upstream: plastic-labs/honcho
+      # platforms: linux/amd64,linux/arm64   # uncomment for multi-arch (extra CI minutes)
